@@ -20,11 +20,16 @@ button { cursor: pointer; }
 
 .app-shell { width: min(760px, 100%); margin: auto; padding: max(28px, env(safe-area-inset-top)) 20px 110px; }
 .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 10px 2px 26px; }
+.hero-actions { display: flex; align-items: center; gap: 9px; }
+.install-button { padding: 10px 14px; border: 1px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-size: 12px; font-weight: 800; }
 .eyebrow { margin: 0 0 7px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .18em; }
 h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(38px, 10vw, 56px); font-weight: 500; letter-spacing: -.04em; }
 .subtitle { margin: 9px 0 0; color: var(--muted); font-size: 14px; }
 .icon-button, .fab { border: 0; border-radius: 50%; background: var(--ink); color: white; box-shadow: 0 8px 24px #2c292224; }
 .icon-button { flex: 0 0 48px; height: 48px; font-size: 27px; }
+.view-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 17px; padding: 5px; border-radius: 14px; background: #eae5dc; }
+.view-tabs button { padding: 10px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; }
+.view-tabs button.active { background: var(--card); color: var(--ink); box-shadow: 0 3px 12px #302b2112; }
 
 .summary { display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; background: var(--ink); color: white; border-radius: 22px; box-shadow: 0 16px 45px #29251d1c; }
 .summary article { min-width: 0; padding: 20px 18px; border-right: 1px solid #ffffff1c; }
@@ -74,10 +79,37 @@ form { padding: 24px; }
 .close-button { border: 0; background: transparent; color: var(--muted); font-size: 28px; }
 form label { display: grid; gap: 7px; margin-bottom: 15px; color: var(--muted); font-size: 12px; font-weight: 700; }
 form input, form textarea { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 11px; outline: none; background: white; color: var(--ink); font-weight: 400; }
+form select { width: 100%; padding: 12px 34px 12px 12px; border: 1px solid var(--line); border-radius: 11px; outline: none; background: white; color: var(--ink); font-weight: 400; }
 form input:focus, form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 form textarea { min-height: 74px; resize: vertical; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .primary-button { width: 100%; padding: 13px; border: 0; border-radius: 12px; background: var(--accent); color: white; font-weight: 800; }
+.date-field { margin: 0 0 15px; padding: 0; border: 0; }
+.date-field legend { margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.date-selects { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 8px; }
+.patterns-view { padding-top: 14px; }
+.pattern-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.pattern-head h2 { margin: 0; font-family: Georgia, serif; font-size: 31px; font-weight: 500; }
+.model-tabs { display: flex; gap: 5px; padding: 4px; border-radius: 999px; background: #eae5dc; }
+.model-tabs button { padding: 7px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 11px; }
+.model-tabs button.active { background: var(--ink); color: white; }
+.pattern-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.pattern-tile { position: relative; min-height: 155px; overflow: hidden; padding: 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); }
+.pattern-tile::after { position: absolute; right: -22px; bottom: -32px; width: 110px; height: 110px; border-radius: 50%; background: var(--swatch, #ddd); opacity: .72; content: ""; }
+.pattern-tile.base { grid-column: 1 / -1; background: var(--ink); color: white; }
+.pattern-tile span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
+.pattern-tile.base span { color: #bbb6ad; }
+.pattern-tile h3 { margin: 0 0 22px; font-family: Georgia, serif; font-size: 22px; font-weight: 500; }
+.pattern-tile strong { position: relative; z-index: 1; font-family: Georgia, serif; font-size: 35px; font-weight: 400; }
+.pattern-tile small { margin-left: 4px; color: var(--muted); }
+.pattern-tile.base small { color: #bbb6ad; }
+.install-dialog { width: min(390px, calc(100% - 30px)); }
+.install-content { position: relative; padding: 28px; }
+.install-content .close-button { position: absolute; top: 13px; right: 15px; }
+.install-content h2 { margin: 0 0 18px; font-family: Georgia, serif; font-size: 28px; font-weight: 500; }
+.install-content p { color: var(--muted); line-height: 1.65; }
+.install-content strong { display: block; padding: 14px; border-radius: 12px; background: var(--ink); color: white; text-align: center; }
+.install-tip { margin-bottom: 0; font-size: 12px; }
 
 @media (max-width: 460px) {
   .app-shell { padding-inline: 15px; }
@@ -88,4 +120,6 @@ form textarea { min-height: 74px; resize: vertical; }
   .card-data { grid-template-columns: 1fr 1fr; }
   .card-data div:last-child { grid-column: 1 / -1; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
+  .hero-actions { flex-direction: column-reverse; align-items: flex-end; }
+  .install-button { padding: 7px 11px; }
 }

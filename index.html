@@ -19,9 +19,18 @@
           <h1>相纸管家</h1>
           <p class="subtitle">每一盒相纸，都用在值得留下的瞬间。</p>
         </div>
-        <button class="icon-button" id="open-form" aria-label="添加相纸">＋</button>
+        <div class="hero-actions">
+          <button class="install-button" id="install-app" type="button">安装</button>
+          <button class="icon-button" id="open-form" aria-label="添加相纸">＋</button>
+        </div>
       </header>
 
+      <nav class="view-tabs" aria-label="页面切换">
+        <button class="active" data-view="inventory">库存明细</button>
+        <button data-view="patterns">款式余量</button>
+      </nav>
+
+      <div id="inventory-view">
       <section class="summary" aria-label="库存概览">
         <article><span>总库存</span><strong id="total-count">0</strong><small>张</small></article>
         <article><span>库存价值</span><strong id="total-value">¥0</strong></article>
@@ -47,6 +56,19 @@
         <span id="item-count">0 盒</span>
       </section>
       <section id="paper-list" class="paper-list" aria-live="polite"></section>
+      </div>
+
+      <section id="patterns-view" class="patterns-view" hidden>
+        <div class="pattern-head">
+          <div><p class="eyebrow">STYLE OVERVIEW</p><h2>款式余量</h2></div>
+          <div class="model-tabs" id="model-tabs">
+            <button class="active" data-model="SQ">SQ</button>
+            <button data-model="mini">mini</button>
+            <button data-model="Wide">Wide</button>
+          </div>
+        </div>
+        <section class="pattern-grid" id="pattern-grid"></section>
+      </section>
     </main>
 
     <button class="fab" id="open-form-fab" aria-label="添加相纸">＋</button>
@@ -58,15 +80,37 @@
           <button type="button" class="close-button" id="close-form" aria-label="关闭">×</button>
         </div>
         <input type="hidden" id="paper-id" />
-        <label>相纸名称<input id="paper-name" required maxlength="40" placeholder="例如：富士 mini 白边" /></label>
+        <div class="form-row">
+          <label>相纸型号<select id="paper-model"><option>SQ</option><option>mini</option><option>Wide</option></select></label>
+          <label>相纸款式<select id="paper-pattern"></select></label>
+        </div>
+        <label>自定义名称（可选）<input id="paper-name" maxlength="40" placeholder="不填则自动使用型号和款式" /></label>
         <div class="form-row">
           <label>剩余数量（张）<input id="paper-quantity" type="number" required min="0" step="1" inputmode="numeric" placeholder="20" /></label>
           <label>购买价格（元）<input id="paper-price" type="number" required min="0" step="0.01" inputmode="decimal" placeholder="99" /></label>
         </div>
-        <label>过期日期<input id="paper-expiry" type="date" required /></label>
+        <fieldset class="date-field">
+          <legend>过期日期</legend>
+          <div class="date-selects">
+            <select id="expiry-year" aria-label="过期年份" required></select>
+            <select id="expiry-month" aria-label="过期月份" required></select>
+            <select id="expiry-day" aria-label="过期日期" required></select>
+          </div>
+        </fieldset>
         <label>备注（可选）<textarea id="paper-note" maxlength="120" placeholder="例如：冰箱第二层、旅行备用"></textarea></label>
         <button class="primary-button" type="submit">保存相纸</button>
       </form>
+    </dialog>
+
+    <dialog id="install-dialog" class="install-dialog">
+      <div class="install-content">
+        <button type="button" class="close-button" id="close-install" aria-label="关闭">×</button>
+        <p class="eyebrow">INSTALL APP</p>
+        <h2>安装到 vivo 桌面</h2>
+        <p>点击浏览器底部或右上角的菜单按钮，选择：</p>
+        <strong>添加到桌面 / 安装应用</strong>
+        <p class="install-tip">安装后会像普通 App 一样从桌面打开，并支持离线使用。</p>
+      </div>
     </dialog>
 
     <script src="app.js"></script>

@@ -6,10 +6,25 @@ const list = $("#paper-list");
 const dialog = $("#paper-dialog");
 const form = $("#paper-form");
 let activeFilter = "all";
+let activeView = "inventory";
+let activeModel = "SQ";
+const PATTERNS = {
+  SQ: ["白边", "彩虹", "黑边", "落日", "汉白玉", "星空"],
+  mini: ["白边", "黑边", "彩虹", "其他"],
+  Wide: ["白边", "黑边", "其他"]
+};
+const SWATCHES = { 白边: "#ede9df", 彩虹: "linear-gradient(135deg,#ec7764,#efc45f,#77b98c,#719be0)", 黑边: "#282723", 落日: "linear-gradient(135deg,#f6c265,#db6246)", 汉白玉: "linear-gradient(135deg,#f3f0e8,#c8c1b5)", 星空: "linear-gradient(135deg,#18243c,#60518e)" };
 let papers = loadPapers();
+let deferredInstallPrompt = null;
 
 function loadPapers() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  try {
+    return (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []).map((paper) => {
+      if (paper.model && paper.pattern) return paper;
+      const matchedPattern = PATTERNS.SQ.find((pattern) => paper.name?.includes(pattern)) || "白边";
+      return { ...paper, model: "SQ", pattern: matchedPattern, customName: paper.name === matchedPattern ? "" : paper.name };
+    });
+  }
   catch { return []; }
 }
 
@@ -72,7 +87,7 @@ function render() {
     const status = statusFor(paper);
     return `<article class="paper-card ${status.key}">
       <div class="card-top">
-        <div><h3>${safe(paper.name)}</h3><p class="note">${safe(paper.note || "暂无备注")}</p></div>
+        <div><h3>${safe(paper.name)}</h3><p class="note">${safe(`${paper.model || "未分类"} · ${paper.pattern || "未分类"}${paper.note ? ` · ${paper.note}` : ""}`)}</p></div>
         <span class="status">${status.label}</span>
       </div>
       <div class="card-data">
@@ -83,16 +98,52 @@ function render() {
       <div class="card-actions"><button data-edit="${paper.id}">编辑</button><button class="delete" data-delete="${paper.id}">删除</button></div>
     </article>`;
   }).join("");
+  renderPatterns();
+}
+
+function renderPatterns() {
+  const patterns = PATTERNS[activeModel];
+  $("#pattern-grid").innerHTML = patterns.map((pattern) => {
+    const quantity = papers.filter((paper) => paper.model === activeModel && paper.pattern === pattern).reduce((sum, paper) => sum + Number(paper.quantity), 0);
+    const isBase = pattern === "白边";
+    return `<article class="pattern-tile ${isBase ? "base" : ""}" style="--swatch:${SWATCHES[pattern] || "#d8d1c5"}">
+      <span>${isBase ? "基础款" : "花边款"}</span><h3>${safe(pattern)}</h3><strong>${quantity}</strong><small>张</small>
+    </article>`;
+  }).join("");
+}
+
+function updatePatternOptions(selected) {
+  const model = $("#paper-model").value;
+  $("#paper-pattern").innerHTML = PATTERNS[model].map((pattern) => `<option${pattern === selected ? " selected" : ""}>${pattern}</option>`).join("");
+}
+
+function populateDate(expiry) {
+  const currentYear = new Date().getFullYear();
+  const picked = expiry ? expiry.split("-").map(Number) : [currentYear + 1, 1, 1];
+  const startYear = Math.min(currentYear - 5, picked[0]);
+  $("#expiry-year").innerHTML = Array.from({ length: currentYear + 15 - startYear + 1 }, (_, i) => startYear + i).map((year) => `<option${year === picked[0] ? " selected" : ""}>${year}年</option>`).join("");
+  $("#expiry-month").innerHTML = Array.from({ length: 12 }, (_, i) => i + 1).map((month) => `<option value="${month}"${month === picked[1] ? " selected" : ""}>${month}月</option>`).join("");
+  updateDays(picked[2]);
+}
+
+function updateDays(selectedDay) {
+  const year = Number($("#expiry-year").value.replace("年", ""));
+  const month = Number($("#expiry-month").value);
+  const max = new Date(year, month, 0).getDate();
+  const day = Math.min(Number(selectedDay || $("#expiry-day").value || 1), max);
+  $("#expiry-day").innerHTML = Array.from({ length: max }, (_, i) => i + 1).map((value) => `<option value="${value}"${value === day ? " selected" : ""}>${value}日</option>`).join("");
 }
 
 function openForm(paper) {
   form.reset();
   $("#form-title").textContent = paper ? "编辑相纸" : "添加相纸";
   $("#paper-id").value = paper?.id || "";
-  $("#paper-name").value = paper?.name || "";
+  $("#paper-model").value = paper?.model || "SQ";
+  updatePatternOptions(paper?.pattern || "白边");
+  $("#paper-name").value = paper?.customName || "";
   $("#paper-quantity").value = paper?.quantity ?? "";
   $("#paper-price").value = paper?.price ?? "";
-  $("#paper-expiry").value = paper?.expiry || "";
+  populateDate(paper?.expiry);
   $("#paper-note").value = paper?.note || "";
   dialog.showModal();
   $("#paper-name").focus();
@@ -101,12 +152,21 @@ function openForm(paper) {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const id = $("#paper-id").value;
+  const model = $("#paper-model").value;
+  const pattern = $("#paper-pattern").value;
+  const customName = $("#paper-name").value.trim();
+  const year = $("#expiry-year").value.replace("年", "");
+  const month = String($("#expiry-month").value).padStart(2, "0");
+  const day = String($("#expiry-day").value).padStart(2, "0");
   const paper = {
     id: id || crypto.randomUUID(),
-    name: $("#paper-name").value.trim(),
+    name: customName || `${model} ${pattern}`,
+    customName,
+    model,
+    pattern,
     quantity: Number($("#paper-quantity").value),
     price: Number($("#paper-price").value),
-    expiry: $("#paper-expiry").value,
+    expiry: `${year}-${month}-${day}`,
     note: $("#paper-note").value.trim()
   };
   papers = id ? papers.map((item) => item.id === id ? paper : item) : [...papers, paper];
@@ -134,9 +194,37 @@ $("#filters").addEventListener("click", (event) => {
 });
 
 $("#search-input").addEventListener("input", render);
+$("#paper-model").addEventListener("change", () => updatePatternOptions());
+$("#expiry-year").addEventListener("change", () => updateDays());
+$("#expiry-month").addEventListener("change", () => updateDays());
+document.querySelector(".view-tabs").addEventListener("click", (event) => {
+  if (!event.target.dataset.view) return;
+  activeView = event.target.dataset.view;
+  document.querySelectorAll(".view-tabs button").forEach((button) => button.classList.toggle("active", button === event.target));
+  $("#inventory-view").hidden = activeView !== "inventory";
+  $("#patterns-view").hidden = activeView !== "patterns";
+  $("#open-form-fab").hidden = activeView !== "inventory";
+  renderPatterns();
+});
+$("#model-tabs").addEventListener("click", (event) => {
+  if (!event.target.dataset.model) return;
+  activeModel = event.target.dataset.model;
+  document.querySelectorAll("#model-tabs button").forEach((button) => button.classList.toggle("active", button === event.target));
+  renderPatterns();
+});
 $("#open-form").addEventListener("click", () => openForm());
 $("#open-form-fab").addEventListener("click", () => openForm());
 $("#close-form").addEventListener("click", () => dialog.close());
+$("#close-install").addEventListener("click", () => $("#install-dialog").close());
+$("#install-app").addEventListener("click", async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  } else $("#install-dialog").showModal();
+});
+window.addEventListener("beforeinstallprompt", (event) => { event.preventDefault(); deferredInstallPrompt = event; $("#install-app").textContent = "安装 App"; });
+window.addEventListener("appinstalled", () => { $("#install-app").hidden = true; });
 dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("service-worker.js");
