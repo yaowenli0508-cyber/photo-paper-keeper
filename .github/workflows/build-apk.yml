@@ -1,0 +1,120 @@
+name: Build offline Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - styles.css
+      - app.js
+      - .github/workflows/build-apk.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Create Android project
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/java/com/photopaper/keeper
+          mkdir -p android/app/src/main/assets
+          mkdir -p android/app/src/main/res/drawable
+          mkdir -p android/app/src/main/res/mipmap-hdpi
+
+          cp index.html styles.css app.js icon.svg android/app/src/main/assets/
+
+          printf '%s\n' 'pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }' 'dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }' 'rootProject.name = "PhotoPaperKeeper"' 'include(":app")' > android/settings.gradle
+
+          printf '%s\n' 'plugins {' '    id "com.android.application" version "8.5.2" apply false' '}' > android/build.gradle
+
+          printf '%s\n' 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8' 'android.useAndroidX=true' > android/gradle.properties
+
+          printf '%s\n' 'plugins {' '    id "com.android.application"' '}' '' 'android {' '    namespace "com.photopaper.keeper"' '    compileSdk 35' '' '    defaultConfig {' '        applicationId "com.photopaper.keeper"' '        minSdk 26' '        targetSdk 35' '        versionCode 1' '        versionName "1.0.0"' '    }' '}' > android/app/build.gradle
+
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <application android:theme="@style/AppTheme" android:label="相纸管家" android:allowBackup="true" android:supportsRtl="true">
+              <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN" />
+                  <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+            <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+              <item name="android:fontFamily">sans</item>
+              <item name="android:colorAccent">#DC643F</item>
+              <item name="android:navigationBarColor">#F7F4EE</item>
+              <item name="android:statusBarColor">#F7F4EE</item>
+              <item name="android:windowLightStatusBar">true</item>
+            </style>
+          </resources>
+          EOF
+
+          cat > android/app/src/main/java/com/photopaper/keeper/MainActivity.java <<'EOF'
+          package com.photopaper.keeper;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.view.Window;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public class MainActivity extends Activity {
+            private WebView webView;
+
+            @Override public void onCreate(Bundle state) {
+              super.onCreate(state);
+              Window window = getWindow();
+              window.setStatusBarColor(0xfff7f4ee);
+              window.setNavigationBarColor(0xfff7f4ee);
+
+              webView = new WebView(this);
+              WebSettings settings = webView.getSettings();
+              settings.setJavaScriptEnabled(true);
+              settings.setDomStorageEnabled(true);
+              settings.setAllowFileAccess(true);
+              settings.setDatabaseEnabled(true);
+              webView.setWebViewClient(new WebViewClient());
+              webView.loadUrl("file:///android_asset/index.html");
+              setContentView(webView);
+            }
+
+            @Override public void onBackPressed() {
+              if (webView.canGoBack()) webView.goBack();
+              else super.onBackPressed();
+            }
+          }
+          EOF
+
+      - name: Build APK
+        working-directory: android
+        run: gradle assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk photo-paper-keeper-v1.0.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: photo-paper-keeper-apk
+          path: photo-paper-keeper-v1.0.apk
+          retention-days: 30
