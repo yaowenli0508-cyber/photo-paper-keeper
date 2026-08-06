@@ -228,4 +228,5 @@ window.addEventListener("appinstalled", () => { $("#install-app").hidden = true;
 dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("service-worker.js");
+if (location.protocol === "file:") $("#install-app").hidden = true;
 render();
