@@ -10,6 +10,9 @@ on:
       - app.js
       - .github/workflows/build-apk.yml
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -118,3 +121,12 @@ jobs:
           name: photo-paper-keeper-apk
           path: photo-paper-keeper-v1.0.apk
           retention-days: 30
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: 相纸管家 Android v1.0.0
+          body: 可在 Android 手机本地安装、完全离线使用的相纸管家。
+          make_latest: true
+          files: photo-paper-keeper-v1.0.apk
