@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f4ee" />
+    <meta name="description" content="记录相纸数量、价格和过期日期" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>相纸管家</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">PHOTO PAPER KEEPER</p>
+          <h1>相纸管家</h1>
+          <p class="subtitle">每一盒相纸，都用在值得留下的瞬间。</p>
+        </div>
+        <button class="icon-button" id="open-form" aria-label="添加相纸">＋</button>
+      </header>
+
+      <section class="summary" aria-label="库存概览">
+        <article><span>总库存</span><strong id="total-count">0</strong><small>张</small></article>
+        <article><span>库存价值</span><strong id="total-value">¥0</strong></article>
+        <article><span>临期提醒</span><strong id="expiring-count">0</strong><small>盒</small></article>
+      </section>
+
+      <section class="toolbar">
+        <label class="search">
+          <span aria-hidden="true">⌕</span>
+          <input id="search-input" type="search" placeholder="搜索品牌、型号或备注" />
+        </label>
+        <div class="filters" id="filters">
+          <button class="active" data-filter="all">全部</button>
+          <button data-filter="fresh">状态良好</button>
+          <button data-filter="expiring">即将过期</button>
+          <button data-filter="expired">已过期</button>
+          <button data-filter="low">低库存</button>
+        </div>
+      </section>
+
+      <section class="inventory-heading">
+        <h2>我的相纸</h2>
+        <span id="item-count">0 盒</span>
+      </section>
+      <section id="paper-list" class="paper-list" aria-live="polite"></section>
+    </main>
+
+    <button class="fab" id="open-form-fab" aria-label="添加相纸">＋</button>
+
+    <dialog id="paper-dialog">
+      <form id="paper-form" method="dialog">
+        <div class="dialog-head">
+          <div><p class="eyebrow">INVENTORY</p><h2 id="form-title">添加相纸</h2></div>
+          <button type="button" class="close-button" id="close-form" aria-label="关闭">×</button>
+        </div>
+        <input type="hidden" id="paper-id" />
+        <label>相纸名称<input id="paper-name" required maxlength="40" placeholder="例如：富士 mini 白边" /></label>
+        <div class="form-row">
+          <label>剩余数量（张）<input id="paper-quantity" type="number" required min="0" step="1" inputmode="numeric" placeholder="20" /></label>
+          <label>购买价格（元）<input id="paper-price" type="number" required min="0" step="0.01" inputmode="decimal" placeholder="99" /></label>
+        </div>
+        <label>过期日期<input id="paper-expiry" type="date" required /></label>
+        <label>备注（可选）<textarea id="paper-note" maxlength="120" placeholder="例如：冰箱第二层、旅行备用"></textarea></label>
+        <button class="primary-button" type="submit">保存相纸</button>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
