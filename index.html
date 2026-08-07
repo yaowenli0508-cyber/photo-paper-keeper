@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <link rel="stylesheet" href="styles.css?v=5" />
     <title>相纸管家</title>
   </head>
   <body>
@@ -54,6 +54,10 @@
           <button data-filter="expired">已过期</button>
           <button data-filter="low">低库存</button>
         </div>
+        <div class="list-controls">
+          <label><span>排序</span><select id="sort-select"><option value="expiry-asc">最快过期优先</option><option value="expiry-desc">最晚过期优先</option></select></label>
+          <label><span>款式</span><select id="pattern-filter"><option value="all">全部款式</option><option value="base">基础款（白边）</option><option value="floral">全部花边</option><option value="彩虹">彩虹</option><option value="黑边">黑边</option><option value="落日">落日</option><option value="汉白玉">汉白玉</option><option value="星空">星空</option><option value="其他">其他</option></select></label>
+        </div>
       </section>
 
       <section class="inventory-heading">
@@ -91,7 +95,7 @@
         </div>
         <label>自定义名称（可选）<input id="paper-name" maxlength="40" placeholder="不填则自动使用型号和款式" /></label>
         <div class="form-row">
-          <label>剩余数量<div class="quantity-input"><input id="paper-quantity" type="number" required min="0" step="1" inputmode="numeric" placeholder="20" /><select id="paper-unit" aria-label="数量单位"><option value="张">张</option><option value="盒">盒</option></select></div></label>
+          <label>剩余数量<div class="quantity-input"><input id="paper-quantity" type="number" required min="0" step="1" inputmode="numeric" placeholder="1" /><select id="paper-unit" aria-label="数量单位"><option value="盒">盒</option><option value="张">张</option></select></div></label>
           <label>购买价格（元）<input id="paper-price" type="number" required min="0" step="0.01" inputmode="decimal" placeholder="99" /></label>
         </div>
         <fieldset class="date-field">
@@ -138,6 +142,6 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=5"></script>
   </body>
 </html>

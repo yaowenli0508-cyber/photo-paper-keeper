@@ -7,6 +7,8 @@ const list = $("#paper-list");
 const dialog = $("#paper-dialog");
 const form = $("#paper-form");
 let activeFilter = "all";
+let activePatternFilter = "all";
+let activeSort = "expiry-asc";
 let activeView = "inventory";
 let activeModel = "SQ";
 const PATTERNS = {
@@ -82,9 +84,16 @@ function render() {
       const status = statusFor(paper).key;
       const filterMatch = activeFilter === "all" || status === activeFilter || (activeFilter === "low" && isLow(paper));
       const searchMatch = `${paper.name} ${paper.note}`.toLowerCase().includes(query);
-      return filterMatch && searchMatch;
+      const patternMatch = activePatternFilter === "all"
+        || (activePatternFilter === "base" && paper.pattern === "白边")
+        || (activePatternFilter === "floral" && paper.pattern !== "白边")
+        || paper.pattern === activePatternFilter;
+      return filterMatch && searchMatch && patternMatch;
     })
-    .sort((a, b) => a.expiry.localeCompare(b.expiry));
+    .sort((a, b) => {
+      if (activeSort === "expiry-desc") return b.expiry.localeCompare(a.expiry);
+      return a.expiry.localeCompare(b.expiry);
+    });
 
   const totals = papers.reduce((result, paper) => ({ ...result, [paper.unit || "张"]: result[paper.unit || "张"] + Number(paper.quantity) }), { 盒: 0, 张: 0 });
   const value = papers.reduce((sum, paper) => sum + Number(paper.price), 0);
@@ -164,7 +173,7 @@ function openForm(paper) {
   updatePatternOptions(paper?.pattern || "白边");
   $("#paper-name").value = paper?.customName || "";
   $("#paper-quantity").value = paper?.quantity ?? "";
-  $("#paper-unit").value = paper?.unit || "张";
+  $("#paper-unit").value = paper?.unit || "盒";
   $("#paper-price").value = paper?.price ?? "";
   populateDate(paper?.expiry);
   $("#paper-note").value = paper?.note || "";
@@ -218,6 +227,8 @@ $("#filters").addEventListener("click", (event) => {
 });
 
 $("#search-input").addEventListener("input", render);
+$("#sort-select").addEventListener("change", (event) => { activeSort = event.target.value; render(); });
+$("#pattern-filter").addEventListener("change", (event) => { activePatternFilter = event.target.value; render(); });
 $("#paper-model").addEventListener("change", () => updatePatternOptions());
 $("#expiry-year").addEventListener("change", () => updateDays());
 $("#expiry-month").addEventListener("change", () => updateDays());
