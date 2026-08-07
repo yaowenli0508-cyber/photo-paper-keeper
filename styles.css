@@ -31,11 +31,14 @@ h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(38px, 10vw, 56px);
 .view-tabs button { padding: 10px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; }
 .view-tabs button.active { background: var(--card); color: var(--ink); box-shadow: 0 3px 12px #302b2112; }
 
-.summary { display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; background: var(--ink); color: white; border-radius: 22px; box-shadow: 0 16px 45px #29251d1c; }
+.summary-label { display: flex; align-items: center; justify-content: space-between; margin: 0 3px 9px; color: var(--muted); font-size: 11px; }
+.summary-label button { padding: 6px 9px; border: 0; border-radius: 999px; background: #eae5dc; color: var(--ink); font-size: 11px; }
+.summary { display: grid; grid-template-columns: repeat(2, 1fr); overflow: hidden; background: var(--ink); color: white; border-radius: 22px; box-shadow: 0 16px 45px #29251d1c; }
 .summary article { min-width: 0; padding: 20px 18px; border-right: 1px solid #ffffff1c; }
-.summary article:last-child { border: 0; }
+.summary article:nth-child(-n+2) { border-bottom: 1px solid #ffffff1c; }
+.summary article:nth-child(2n) { border-right: 0; }
 .summary span { display: block; margin-bottom: 8px; color: #c9c4b9; font-size: 12px; }
-.summary strong { font-family: Georgia, serif; font-size: clamp(24px, 7vw, 34px); font-weight: 400; }
+.summary strong { display: block; overflow: hidden; font-family: Georgia, serif; font-size: clamp(22px, 6vw, 31px); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .summary small { margin-left: 3px; color: #c9c4b9; }
 
 .toolbar { margin-top: 26px; }
@@ -84,6 +87,12 @@ form input:focus, form textarea:focus { border-color: var(--accent); box-shadow:
 form textarea { min-height: 74px; resize: vertical; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .primary-button { width: 100%; padding: 13px; border: 0; border-radius: 12px; background: var(--accent); color: white; font-weight: 800; }
+.quantity-input { display: grid; grid-template-columns: 1fr 74px; gap: 7px; }
+.month-input { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+.month-input span { color: var(--ink); font-size: 14px; }
+.quick-months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: -4px 0 15px; }
+.quick-months button { padding: 9px 4px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--muted); font-size: 11px; }
+.setting-note { margin: 0 0 17px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .date-field { margin: 0 0 15px; padding: 0; border: 0; }
 .date-field legend { margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
 .date-selects { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 8px; }
@@ -100,7 +109,7 @@ form textarea { min-height: 74px; resize: vertical; }
 .pattern-tile span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
 .pattern-tile.base span { color: #bbb6ad; }
 .pattern-tile h3 { margin: 0 0 22px; font-family: Georgia, serif; font-size: 22px; font-weight: 500; }
-.pattern-tile strong { position: relative; z-index: 1; font-family: Georgia, serif; font-size: 35px; font-weight: 400; }
+.pattern-tile strong { position: relative; z-index: 1; display: block; font-family: Georgia, serif; font-size: 25px; font-weight: 400; }
 .pattern-tile small { margin-left: 4px; color: var(--muted); }
 .pattern-tile.base small { color: #bbb6ad; }
 .install-dialog { width: min(390px, calc(100% - 30px)); }
@@ -115,7 +124,7 @@ form textarea { min-height: 74px; resize: vertical; }
   .app-shell { padding-inline: 15px; }
   .filters { margin-inline: -15px; padding-inline: 15px; }
   .summary article { padding: 17px 12px; }
-  .summary strong { font-size: 23px; }
+  .summary strong { font-size: 21px; }
   .summary span { font-size: 10px; }
   .card-data { grid-template-columns: 1fr 1fr; }
   .card-data div:last-child { grid-column: 1 / -1; }

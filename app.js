@@ -1,4 +1,5 @@
 const STORAGE_KEY = "photo-paper-keeper-v1";
+const SETTINGS_KEY = "photo-paper-settings-v1";
 const DAY = 86400000;
 
 const $ = (selector) => document.querySelector(selector);
@@ -15,14 +16,20 @@ const PATTERNS = {
 };
 const SWATCHES = { 白边: "#ede9df", 彩虹: "linear-gradient(135deg,#ec7764,#efc45f,#77b98c,#719be0)", 黑边: "#282723", 落日: "linear-gradient(135deg,#f6c265,#db6246)", 汉白玉: "linear-gradient(135deg,#f3f0e8,#c8c1b5)", 星空: "linear-gradient(135deg,#18243c,#60518e)" };
 let papers = loadPapers();
+let settings = loadSettings();
 let deferredInstallPrompt = null;
+
+function loadSettings() {
+  try { return { warningMonths: 6, ...(JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}) }; }
+  catch { return { warningMonths: 6 }; }
+}
 
 function loadPapers() {
   try {
     return (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []).map((paper) => {
-      if (paper.model && paper.pattern) return paper;
+      if (paper.model && paper.pattern) return { unit: "张", ...paper };
       const matchedPattern = PATTERNS.SQ.find((pattern) => paper.name?.includes(pattern)) || "白边";
-      return { ...paper, model: "SQ", pattern: matchedPattern, customName: paper.name === matchedPattern ? "" : paper.name };
+      return { unit: "张", ...paper, model: "SQ", pattern: matchedPattern, customName: paper.name === matchedPattern ? "" : paper.name };
     });
   }
   catch { return []; }
@@ -47,8 +54,17 @@ function daysUntil(date) {
 function statusFor(paper) {
   const days = daysUntil(paper.expiry);
   if (days < 0) return { key: "expired", label: `已过期 ${Math.abs(days)} 天` };
-  if (days <= 30) return { key: "expiring", label: days === 0 ? "今天过期" : `${days} 天后过期` };
+  if (days <= settings.warningMonths * 30) return { key: "expiring", label: days === 0 ? "今天过期" : `${formatRemaining(days)}后过期` };
   return { key: "fresh", label: "状态良好" };
+}
+
+function formatRemaining(days) {
+  if (days <= 30) return `${days}天`;
+  return `${Math.ceil(days / 30)}个月`;
+}
+
+function isLow(paper) {
+  return paper.unit === "盒" ? paper.quantity <= 1 : paper.quantity <= 10;
 }
 
 function formatDate(date) {
@@ -64,22 +80,27 @@ function render() {
   const visible = papers
     .filter((paper) => {
       const status = statusFor(paper).key;
-      const filterMatch = activeFilter === "all" || status === activeFilter || (activeFilter === "low" && paper.quantity <= 10);
+      const filterMatch = activeFilter === "all" || status === activeFilter || (activeFilter === "low" && isLow(paper));
       const searchMatch = `${paper.name} ${paper.note}`.toLowerCase().includes(query);
       return filterMatch && searchMatch;
     })
     .sort((a, b) => a.expiry.localeCompare(b.expiry));
 
-  const total = papers.reduce((sum, paper) => sum + Number(paper.quantity), 0);
+  const totals = papers.reduce((result, paper) => ({ ...result, [paper.unit || "张"]: result[paper.unit || "张"] + Number(paper.quantity) }), { 盒: 0, 张: 0 });
   const value = papers.reduce((sum, paper) => sum + Number(paper.price), 0);
   const expiring = papers.filter((paper) => ["expiring", "expired"].includes(statusFor(paper).key)).length;
-  $("#total-count").textContent = total;
+  const nearest = [...papers].filter((paper) => daysUntil(paper.expiry) >= 0).sort((a, b) => a.expiry.localeCompare(b.expiry))[0];
+  $("#total-count").textContent = [totals.盒 ? `${totals.盒}盒` : "", totals.张 ? `${totals.张}张` : ""].filter(Boolean).join(" · ") || "0张";
   $("#total-value").textContent = formatMoney(value).replace(".00", "");
   $("#expiring-count").textContent = expiring;
-  $("#item-count").textContent = `${visible.length} 盒`;
+  $("#nearest-expiry").textContent = nearest ? formatRemaining(daysUntil(nearest.expiry)) : "暂无";
+  $("#nearest-name").textContent = nearest?.name || "";
+  $("#threshold-label").textContent = `${settings.warningMonths}个月`;
+  $("#item-count").textContent = `${visible.length} 条`;
 
   if (!visible.length) {
     list.innerHTML = `<div class="empty"><strong>${papers.length ? "没有匹配的相纸" : "还没有记录相纸"}</strong><span>${papers.length ? "试试切换筛选条件" : "点击右下角的＋添加第一盒"}</span></div>`;
+    renderPatterns();
     return;
   }
 
@@ -91,7 +112,7 @@ function render() {
         <span class="status">${status.label}</span>
       </div>
       <div class="card-data">
-        <div><span>剩余数量</span><strong>${paper.quantity} 张${paper.quantity <= 10 ? " · 库存低" : ""}</strong></div>
+        <div><span>剩余数量</span><strong>${paper.quantity} ${paper.unit || "张"}${isLow(paper) ? " · 库存低" : ""}</strong></div>
         <div><span>购买价格</span><strong>${formatMoney(paper.price)}</strong></div>
         <div><span>过期日期</span><strong>${formatDate(paper.expiry)}</strong></div>
       </div>
@@ -104,10 +125,11 @@ function render() {
 function renderPatterns() {
   const patterns = PATTERNS[activeModel];
   $("#pattern-grid").innerHTML = patterns.map((pattern) => {
-    const quantity = papers.filter((paper) => paper.model === activeModel && paper.pattern === pattern).reduce((sum, paper) => sum + Number(paper.quantity), 0);
+    const quantities = papers.filter((paper) => paper.model === activeModel && paper.pattern === pattern).reduce((result, paper) => ({ ...result, [paper.unit || "张"]: result[paper.unit || "张"] + Number(paper.quantity) }), { 盒: 0, 张: 0 });
+    const quantityText = [quantities.盒 ? `${quantities.盒}盒` : "", quantities.张 ? `${quantities.张}张` : ""].filter(Boolean).join(" · ") || "0张";
     const isBase = pattern === "白边";
     return `<article class="pattern-tile ${isBase ? "base" : ""}" style="--swatch:${SWATCHES[pattern] || "#d8d1c5"}">
-      <span>${isBase ? "基础款" : "花边款"}</span><h3>${safe(pattern)}</h3><strong>${quantity}</strong><small>张</small>
+      <span>${isBase ? "基础款" : "花边款"}</span><h3>${safe(pattern)}</h3><strong>${quantityText}</strong>
     </article>`;
   }).join("");
 }
@@ -142,6 +164,7 @@ function openForm(paper) {
   updatePatternOptions(paper?.pattern || "白边");
   $("#paper-name").value = paper?.customName || "";
   $("#paper-quantity").value = paper?.quantity ?? "";
+  $("#paper-unit").value = paper?.unit || "张";
   $("#paper-price").value = paper?.price ?? "";
   populateDate(paper?.expiry);
   $("#paper-note").value = paper?.note || "";
@@ -165,6 +188,7 @@ form.addEventListener("submit", (event) => {
     model,
     pattern,
     quantity: Number($("#paper-quantity").value),
+    unit: $("#paper-unit").value,
     price: Number($("#paper-price").value),
     expiry: `${year}-${month}-${day}`,
     note: $("#paper-note").value.trim()
@@ -215,6 +239,16 @@ $("#model-tabs").addEventListener("click", (event) => {
 $("#open-form").addEventListener("click", () => openForm());
 $("#open-form-fab").addEventListener("click", () => openForm());
 $("#close-form").addEventListener("click", () => dialog.close());
+$("#open-settings").addEventListener("click", () => { $("#warning-months").value = settings.warningMonths; $("#settings-dialog").showModal(); });
+$("#close-settings").addEventListener("click", () => $("#settings-dialog").close());
+$("#quick-months").addEventListener("click", (event) => { if (event.target.dataset.months) $("#warning-months").value = event.target.dataset.months; });
+$("#settings-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  settings.warningMonths = Math.max(1, Math.min(24, Number($("#warning-months").value)));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  $("#settings-dialog").close();
+  render();
+});
 $("#close-install").addEventListener("click", () => $("#install-dialog").close());
 $("#install-app").addEventListener("click", async () => {
   if (deferredInstallPrompt) {
