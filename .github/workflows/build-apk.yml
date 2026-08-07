@@ -37,6 +37,7 @@ jobs:
           mkdir -p android/app/src/main/res/mipmap-hdpi
 
           cp index.html styles.css app.js icon.svg android/app/src/main/assets/
+          cp app-icon.png android/app/src/main/res/drawable/app_icon.png
 
           printf '%s\n' 'pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }' 'dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }' 'rootProject.name = "PhotoPaperKeeper"' 'include(":app")' > android/settings.gradle
 
@@ -44,11 +45,11 @@ jobs:
 
           printf '%s\n' 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8' 'android.useAndroidX=true' > android/gradle.properties
 
-          printf '%s\n' 'plugins {' '    id "com.android.application"' '}' '' 'android {' '    namespace "com.photopaper.keeper"' '    compileSdk 35' '' '    defaultConfig {' '        applicationId "com.photopaper.keeper"' '        minSdk 26' '        targetSdk 35' '        versionCode 1' '        versionName "1.0.0"' '    }' '}' > android/app/build.gradle
+          printf '%s\n' 'plugins {' '    id "com.android.application"' '}' '' 'android {' '    namespace "com.photopaper.keeper"' '    compileSdk 35' '' '    defaultConfig {' '        applicationId "com.photopaper.keeper"' '        minSdk 26' '        targetSdk 35' '        versionCode 2' '        versionName "1.1.0"' '    }' '}' > android/app/build.gradle
 
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <application android:theme="@style/AppTheme" android:label="相纸管家" android:allowBackup="true" android:supportsRtl="true">
+            <application android:theme="@style/AppTheme" android:label="相纸管家" android:icon="@drawable/app_icon" android:roundIcon="@drawable/app_icon" android:allowBackup="true" android:supportsRtl="true">
               <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
                 <intent-filter>
                   <action android:name="android.intent.action.MAIN" />
@@ -114,19 +115,19 @@ jobs:
         run: gradle assembleDebug --no-daemon
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk photo-paper-keeper-v1.0.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk photo-paper-keeper-v1.1.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: photo-paper-keeper-apk
-          path: photo-paper-keeper-v1.0.apk
+          path: photo-paper-keeper-v1.1.apk
           retention-days: 30
 
       - name: Publish direct APK download
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: 相纸管家 Android v1.0.0
+          tag_name: v1.1.0
+          name: 相纸管家 Android v1.1.0
           body: 可在 Android 手机本地安装、完全离线使用的相纸管家。
           make_latest: true
-          files: photo-paper-keeper-v1.0.apk
+          files: photo-paper-keeper-v1.1.apk
