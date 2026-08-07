@@ -116,6 +116,11 @@ form textarea { min-height: 74px; resize: vertical; }
 .pattern-tile strong { position: relative; z-index: 1; display: block; font-family: Georgia, serif; font-size: 25px; font-weight: 400; }
 .pattern-tile small { margin-left: 4px; color: var(--muted); }
 .pattern-tile.base small { color: #bbb6ad; }
+.pattern-photo { position: absolute; right: 0; bottom: 0; z-index: 0; width: 118px; height: 118px; border-radius: 58px 0 0 0; background-position: center; background-size: cover; box-shadow: -5px -5px 22px #28231c18; }
+.pattern-tile.has-image::after { display: none; }
+.pattern-actions { position: absolute; top: 13px; right: 13px; z-index: 2; display: flex; gap: 5px; }
+.pattern-actions button { padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; background: #ffffffdf; color: var(--muted); font-size: 9px; backdrop-filter: blur(5px); }
+.pattern-tile.base .pattern-actions button { border-color: #ffffff33; background: #ffffff1d; color: #ddd8cf; }
 .install-dialog { width: min(390px, calc(100% - 30px)); }
 .install-content { position: relative; padding: 28px; }
 .install-content .close-button { position: absolute; top: 13px; right: 15px; }

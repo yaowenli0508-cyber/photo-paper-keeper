@@ -1,5 +1,6 @@
 const STORAGE_KEY = "photo-paper-keeper-v1";
 const SETTINGS_KEY = "photo-paper-settings-v1";
+const PATTERN_IMAGES_KEY = "photo-paper-pattern-images-v1";
 const DAY = 86400000;
 
 const $ = (selector) => document.querySelector(selector);
@@ -20,11 +21,18 @@ const PATTERNS = {
 const SWATCHES = { 白边: "#ede9df", 彩虹: "linear-gradient(135deg,#ec7764,#efc45f,#77b98c,#719be0)", 黑边: "#282723", 落日: "linear-gradient(135deg,#f6c265,#db6246)", 汉白玉: "linear-gradient(135deg,#f3f0e8,#c8c1b5)", 星空: "linear-gradient(135deg,#18243c,#60518e)" };
 let papers = loadPapers();
 let settings = loadSettings();
+let patternImages = loadPatternImages();
+let pendingPatternImageKey = "";
 let deferredInstallPrompt = null;
 
 function loadSettings() {
   try { return { warningMonths: 6, ...(JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}) }; }
   catch { return { warningMonths: 6 }; }
+}
+
+function loadPatternImages() {
+  try { return JSON.parse(localStorage.getItem(PATTERN_IMAGES_KEY)) || {}; }
+  catch { return {}; }
 }
 
 function loadPapers() {
@@ -139,10 +147,36 @@ function renderPatterns() {
     const quantities = papers.filter((paper) => paper.model === activeModel && paper.pattern === pattern).reduce((result, paper) => ({ ...result, [paper.unit || "张"]: result[paper.unit || "张"] + Number(paper.quantity) }), { 盒: 0, 张: 0 });
     const quantityText = [quantities.盒 ? `${quantities.盒}盒` : "", quantities.张 ? `${quantities.张}张` : ""].filter(Boolean).join(" · ") || "0张";
     const isBase = pattern === "白边";
-    return `<article class="pattern-tile ${isBase ? "base" : ""}" style="--swatch:${SWATCHES[pattern] || "#d8d1c5"}">
+    const imageKey = `${activeModel}:${pattern}`;
+    const customImage = patternImages[imageKey];
+    return `<article class="pattern-tile ${isBase ? "base" : ""} ${customImage ? "has-image" : ""}" style="--swatch:${SWATCHES[pattern] || "#d8d1c5"}">
+      <div class="pattern-actions"><button data-pattern-image="${safe(imageKey)}">${customImage ? "更换图片" : "选择图片"}</button>${customImage ? `<button data-pattern-reset="${safe(imageKey)}">恢复默认</button>` : ""}</div>
       <span>${isBase ? "基础款" : "花边款"}</span><h3>${safe(pattern)}</h3><strong>${quantityText}</strong>
+      ${customImage ? `<div class="pattern-photo" style="background-image:url('${customImage}')"></div>` : ""}
     </article>`;
   }).join("");
+}
+
+function compressPatternImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reject;
+      image.onload = () => {
+        const maxSize = 600;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.76));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function updatePatternOptions(selected) {
@@ -249,6 +283,27 @@ $("#model-tabs").addEventListener("click", (event) => {
   activeModel = event.target.dataset.model;
   document.querySelectorAll("#model-tabs button").forEach((button) => button.classList.toggle("active", button === event.target));
   renderPatterns();
+});
+$("#pattern-grid").addEventListener("click", (event) => {
+  if (event.target.dataset.patternImage) {
+    pendingPatternImageKey = event.target.dataset.patternImage;
+    $("#pattern-image-input").click();
+  }
+  if (event.target.dataset.patternReset && confirm("恢复这个款式的默认样式吗？")) {
+    delete patternImages[event.target.dataset.patternReset];
+    localStorage.setItem(PATTERN_IMAGES_KEY, JSON.stringify(patternImages));
+    renderPatterns();
+  }
+});
+$("#pattern-image-input").addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file || !pendingPatternImageKey) return;
+  try {
+    patternImages[pendingPatternImageKey] = await compressPatternImage(file);
+    localStorage.setItem(PATTERN_IMAGES_KEY, JSON.stringify(patternImages));
+    renderPatterns();
+  } catch { alert("图片读取失败，请换一张图片重试。"); }
+  event.target.value = "";
 });
 $("#open-form").addEventListener("click", () => openForm());
 $("#open-form-fab").addEventListener("click", () => openForm());
