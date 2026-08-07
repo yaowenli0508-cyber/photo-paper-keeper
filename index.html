@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
     <title>相纸管家</title>
   </head>
   <body>
@@ -56,6 +56,7 @@
         </div>
         <div class="list-controls">
           <label><span>排序</span><select id="sort-select"><option value="expiry-asc">最快过期优先</option><option value="expiry-desc">最晚过期优先</option></select></label>
+          <label><span>尺寸</span><select id="model-filter"><option value="all">全部尺寸</option><option value="SQ">SQ</option><option value="mini">mini</option><option value="Wide">Wide</option></select></label>
           <label><span>款式</span><select id="pattern-filter"><option value="all">全部款式</option><option value="base">基础款（白边）</option><option value="floral">全部花边</option><option value="彩虹">彩虹</option><option value="黑边">黑边</option><option value="落日">落日</option><option value="汉白玉">汉白玉</option><option value="星空">星空</option><option value="其他">其他</option></select></label>
         </div>
       </section>
@@ -142,6 +143,6 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>

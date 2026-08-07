@@ -7,6 +7,7 @@ const list = $("#paper-list");
 const dialog = $("#paper-dialog");
 const form = $("#paper-form");
 let activeFilter = "all";
+let activeModelFilter = "all";
 let activePatternFilter = "all";
 let activeSort = "expiry-asc";
 let activeView = "inventory";
@@ -88,7 +89,8 @@ function render() {
         || (activePatternFilter === "base" && paper.pattern === "白边")
         || (activePatternFilter === "floral" && paper.pattern !== "白边")
         || paper.pattern === activePatternFilter;
-      return filterMatch && searchMatch && patternMatch;
+      const modelMatch = activeModelFilter === "all" || paper.model === activeModelFilter;
+      return filterMatch && searchMatch && patternMatch && modelMatch;
     })
     .sort((a, b) => {
       if (activeSort === "expiry-desc") return b.expiry.localeCompare(a.expiry);
@@ -228,6 +230,7 @@ $("#filters").addEventListener("click", (event) => {
 
 $("#search-input").addEventListener("input", render);
 $("#sort-select").addEventListener("change", (event) => { activeSort = event.target.value; render(); });
+$("#model-filter").addEventListener("change", (event) => { activeModelFilter = event.target.value; render(); });
 $("#pattern-filter").addEventListener("change", (event) => { activePatternFilter = event.target.value; render(); });
 $("#paper-model").addEventListener("change", () => updatePatternOptions());
 $("#expiry-year").addEventListener("change", () => updateDays());
