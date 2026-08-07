@@ -305,6 +305,14 @@ $("#pattern-image-input").addEventListener("change", async (event) => {
   } catch { alert("图片读取失败，请换一张图片重试。"); }
   event.target.value = "";
 });
+window.receiveAndroidPatternImage = (dataUrl) => {
+  if (!pendingPatternImageKey || !dataUrl) return;
+  try {
+    patternImages[pendingPatternImageKey] = dataUrl;
+    localStorage.setItem(PATTERN_IMAGES_KEY, JSON.stringify(patternImages));
+    renderPatterns();
+  } catch { alert("图片保存失败，请换一张图片重试。"); }
+};
 $("#open-form").addEventListener("click", () => openForm());
 $("#open-form-fab").addEventListener("click", () => openForm());
 $("#close-form").addEventListener("click", () => dialog.close());

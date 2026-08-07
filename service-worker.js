@@ -1,5 +1,5 @@
-const CACHE = "photo-paper-keeper-v9";
-const ASSETS = ["./", "index.html", "styles.css?v=9", "app.js?v=9", "manifest.webmanifest", "icon.svg"];
+const CACHE = "photo-paper-keeper-v10";
+const ASSETS = ["./", "index.html", "styles.css?v=10", "app.js?v=10", "manifest.webmanifest", "icon.svg"];
 self.addEventListener("install", (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", (event) => event.respondWith(fetch(event.request).then((response) => {
