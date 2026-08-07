@@ -45,7 +45,7 @@ jobs:
 
           printf '%s\n' 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8' 'android.useAndroidX=true' > android/gradle.properties
 
-          printf '%s\n' 'plugins {' '    id "com.android.application"' '}' '' 'android {' '    namespace "com.photopaper.keeper"' '    compileSdk 35' '' '    defaultConfig {' '        applicationId "com.photopaper.keeper"' '        minSdk 26' '        targetSdk 35' '        versionCode 3' '        versionName "1.2.0"' '    }' '}' > android/app/build.gradle
+          printf '%s\n' 'plugins {' '    id "com.android.application"' '}' '' 'android {' '    namespace "com.photopaper.keeper"' '    compileSdk 35' '' '    defaultConfig {' '        applicationId "com.photopaper.keeper"' '        minSdk 26' '        targetSdk 35' '        versionCode 4' '        versionName "1.3.0"' '    }' '}' > android/app/build.gradle
 
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -78,14 +78,19 @@ jobs:
 
           import android.app.Activity;
           import android.content.Intent;
+          import android.graphics.Bitmap;
+          import android.graphics.BitmapFactory;
           import android.net.Uri;
           import android.os.Bundle;
+          import android.util.Base64;
           import android.view.Window;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
+          import java.io.ByteArrayOutputStream;
+          import java.io.InputStream;
 
           public class MainActivity extends Activity {
             private static final int FILE_CHOOSER_REQUEST = 1001;
@@ -123,8 +128,26 @@ jobs:
             @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
               super.onActivityResult(requestCode, resultCode, data);
               if (requestCode != FILE_CHOOSER_REQUEST || filePathCallback == null) return;
-              Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-              filePathCallback.onReceiveValue(result);
+              if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                try {
+                  InputStream stream = getContentResolver().openInputStream(data.getData());
+                  Bitmap original = BitmapFactory.decodeStream(stream);
+                  if (stream != null) stream.close();
+                  if (original == null) throw new Exception("Unable to decode image");
+                  int longest = Math.max(original.getWidth(), original.getHeight());
+                  float scale = Math.min(1f, 600f / longest);
+                  Bitmap scaled = scale < 1f ? Bitmap.createScaledBitmap(original, Math.round(original.getWidth() * scale), Math.round(original.getHeight() * scale), true) : original;
+                  ByteArrayOutputStream output = new ByteArrayOutputStream();
+                  scaled.compress(Bitmap.CompressFormat.JPEG, 76, output);
+                  String encoded = Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+                  webView.evaluateJavascript("window.receiveAndroidPatternImage('data:image/jpeg;base64," + encoded + "')", null);
+                  if (scaled != original) scaled.recycle();
+                  original.recycle();
+                } catch (Exception error) {
+                  webView.evaluateJavascript("alert('图片读取失败，请换一张图片重试。')", null);
+                }
+              }
+              filePathCallback.onReceiveValue(null);
               filePathCallback = null;
             }
 
@@ -140,19 +163,19 @@ jobs:
         run: gradle assembleDebug --no-daemon
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk photo-paper-keeper-v1.2.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk photo-paper-keeper-v1.3.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: photo-paper-keeper-apk
-          path: photo-paper-keeper-v1.2.apk
+          path: photo-paper-keeper-v1.3.apk
           retention-days: 30
 
       - name: Publish direct APK download
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: 相纸管家 Android v1.2.0
+          tag_name: v1.3.0
+          name: 相纸管家 Android v1.3.0
           body: 可在 Android 手机本地安装、完全离线使用的相纸管家。
           make_latest: true
-          files: photo-paper-keeper-v1.2.apk
+          files: photo-paper-keeper-v1.3.apk
